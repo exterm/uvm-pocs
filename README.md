@@ -7,5 +7,7 @@
 
 ## Run things
 
+```
 $ pipenv install
 $ pipenv shell
+```
