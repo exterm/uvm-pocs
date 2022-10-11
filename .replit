@@ -1,6 +1,7 @@
 
 # The primary language of the repl. There can be others, though!
 language = "python3"
+# entrypoint = "assignment-07-01-slow-and-exact.py"
 entrypoint = "assignment-07-01.py"
 # A list of globs that specify which files and directories should
 # be hidden in the workspace.
