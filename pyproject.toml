@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "repl_nix_uvm-pocs"
+version = "0.1.0"
+description = ""
+authors = ["Replit user <<>>"]
+
+[tool.poetry.dependencies]
+python = ">=3.8.0,<3.9"
+numpy = "^1.22.2"
+matplotlib = "^3.5.2"
+pandas = "^1.4.2"
+jax = "^0.3.13"
+scipy = "^1.9.2"
+
+
+[tool.poetry.dev-dependencies]
+debugpy = "^1.6.2"
+python-lsp-server = {extras = ["yapf", "rope", "pyflakes"], version = "^1.5.0"}
+toml = "^0.10.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
