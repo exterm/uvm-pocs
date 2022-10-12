@@ -19,7 +19,7 @@ Ns = [10, 10**2, 10**3, 10**4, 10**5, 10**6]  #[:-3]
 
 
 def ks(count):
-    rands = np.random.rand(count)
+    rands = np.random.random(count)
     zs = (1 - rands)**(-1 / (gamma - 1))
     ks = zs.round()
     return ks
@@ -53,7 +53,7 @@ if part == 'a':
     # plot the n values of k_(max,i) as a function of i.
 
     fig, axes = plt.subplots(2, 3, figsize=(13, 8))
-    fig.subplots_adjust(hspace=0.3, left=0.1)
+    fig.subplots_adjust(hspace=0.3, left=0.1, wspace=0.3)
 
     i = 0
     j = 0
@@ -125,5 +125,6 @@ else:
     plt.legend()
     plt.loglog(10)
     plt.xlabel('Sample size')
-    plt.ylabel('$\\min k_{\\rm max}$')
+    plt.ylabel('$\\langle k_{\\rm max} \\rangle$')
+    plt.savefig('output/assignment-07-01b.png', dpi=600)
     plt.show()
