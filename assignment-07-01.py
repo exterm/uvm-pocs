@@ -17,9 +17,12 @@ n = 1000
 # Save lots of time when testing by shortening this list
 Ns = [10, 10**2, 10**3, 10**4, 10**5, 10**6]  #[:-3]
 
+# explicitly initialize the random number generator to make results reproducible
+rng = np.random.RandomState(0)
+
 
 def ks(count):
-    rands = np.random.random(count)
+    rands = rng.random(count)
     zs = (1 - rands)**(-1 / (gamma - 1))
     ks = zs.round()
     return ks
