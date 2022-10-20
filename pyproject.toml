@@ -5,13 +5,10 @@ description = ""
 authors = ["Replit user <<>>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8.0,<3.9"
+python = ">=3.8.0,<3.11"
 numpy = "^1.22.2"
 matplotlib = "^3.5.2"
 pandas = "^1.4.2"
-jax = "^0.3.13"
-scipy = "^1.9.2"
-
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"
