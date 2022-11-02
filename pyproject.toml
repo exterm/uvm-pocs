@@ -10,7 +10,7 @@ numpy = "^1.22.2"
 matplotlib = "^3.5.2"
 pandas = "^1.4.2"
 scipy = "^1.9.3"
-pandarallel = "^1.6.3"
+snakeviz = "^2.1.1"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"
