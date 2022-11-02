@@ -35,7 +35,7 @@ import matplotlib.pyplot as plt
 # (c) Plot Zipf (or size) distributions of tree component sizes S at peak yield.
 #     Note: You will have to rebuild forests and stop at the peak yield value of D to find these distributions. By
 #     recording the sequence of optimal tree planting, this can be done without running the simulation again.
-# (d) Extra level: Plot Zipf (or size) distributions for D = L2 for varying tree densities
+# (d) Extra level: Plot Zipf (or size) distributions for D = L^2 for varying tree densities
 #     \rho = 0:10; 0:20; : : : ; 0:90. This will be an effort to reproduce Fig. 3b in [2].
 # Hint: Working on un-treed locations will make choosing the next location easier.
 
@@ -100,7 +100,10 @@ def run_hot_model(L: int, D: int):
 
     # add trees until forest is full
     # that means we have to add L^2 trees
-    for _ in range(L * L):
+    for i in range(L * L):
+        # print progress
+        if i % 100 == 0:
+            print("  %d/%d" % (i, L * L))
         # choose D random empty locations for tree planting simulations
         empty_locations = np.array(np.where(world == 0)).T
         tree_planting_locations = empty_locations[
@@ -184,14 +187,13 @@ if not args.no_plot:
     for i, (yields, max_yield_forest, _) in enumerate(results):
         labeled_components, _ = ndimage.label(max_yield_forest)
         component_sizes = np.bincount(labeled_components.flatten())[1:]
-        axes[i // 2, i % 2].scatter(rankdata(-component_sizes), component_sizes)
-        # axes[i // 2, i % 2].hist(component_sizes, bins=range(1, L*L))
+        axes[i // 2, i % 2].scatter(component_sizes, rankdata(-component_sizes))
         axes[i // 2, i % 2].set_xscale("log")
         axes[i // 2, i % 2].set_yscale("log")
         axes[i // 2, i % 2].set_title("D = %d" % Ds[i])
         axes[i // 2, i % 2].set_yscale("log")
         axes[i // 2, i % 2].set_xlabel("component size")
-        axes[i // 2, i % 2].set_ylabel("count")
+        axes[i // 2, i % 2].set_ylabel("rank")
 
     # increase spacing between subplots
     fig.tight_layout()
@@ -208,10 +210,10 @@ if not args.no_plot:
     for i, forest in enumerate(history):
         labeled_components, _ = ndimage.label(forest)
         component_sizes = np.bincount(labeled_components.flatten())[1:]
-        plt.scatter(rankdata(-component_sizes), component_sizes, label="density = %.2f" % densities[i])
+        plt.scatter(component_sizes, rankdata(-component_sizes), label="density = %.2f" % densities[i])
     plt.legend()
-    plt.xlabel("component size rank")
-    plt.ylabel("component size")
+    plt.xlabel("component size")
+    plt.ylabel("component size rank")
     plt.loglog(10)
     plt.tight_layout()
     plt.savefig(f"output/10_3_d-L{L}.png", dpi=600)
