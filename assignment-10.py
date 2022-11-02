@@ -1,9 +1,17 @@
 import functools
+import argparse
+import time
 
 import pandas as pd
 from scipy import ndimage
+from scipy.stats import rankdata
 import numpy as np
 import matplotlib.pyplot as plt
+
+from pandarallel import pandarallel
+import psutil
+
+pandarallel.initialize(nb_workers=psutil.cpu_count(logical=False)-1)
 
 # Code up the discrete HOT model in 2d. Let’s see if we find any of these super-duper power laws everyone keeps talking
 #  about. We’ll follow the same approach as the N = L×L 2-d forest discussed in lectures.
@@ -37,19 +45,17 @@ import matplotlib.pyplot as plt
 # Hint: Working on un-treed locations will make choosing the next location easier.
 
 def simulate_tree_at_location(world: np.ndarray, tree_planting_location: np.ndarray):
+    thisworld = world.copy()
     # plant tree
-    world[tree_planting_location[0], tree_planting_location[1]] = True
+    thisworld[tree_planting_location[0], tree_planting_location[1]] = True
 
     # compute the average forest fire size over the full spark distribution:
     #  Sum over all fields of lightning probability multiplied by component size
-    component_sizes = calculate_component_size_map(world)
+    component_sizes = calculate_component_size_map(thisworld)
 
-    L = world.shape[0]
+    L = thisworld.shape[0]
 
     average_forest_fire_size = np.sum(lightning_probability_distribution(L) * component_sizes)
-
-    # remove tree
-    world[tree_planting_location[0], tree_planting_location[1]] = False
 
     return average_forest_fire_size
 
@@ -78,6 +84,7 @@ def run_hot_model(L: int, D: int):
     world = np.zeros((L, L), dtype=bool)
 
     yields = []
+    history = []
     max_yield = 0
     max_yield_forest = None
 
@@ -90,9 +97,14 @@ def run_hot_model(L: int, D: int):
             np.random.choice(empty_locations.shape[0], min(D, len(empty_locations)), replace=False)
         ]
 
-        average_forest_fire_sizes = [
-            simulate_tree_at_location(world, location) for location in tree_planting_locations
-        ]
+        if len(tree_planting_locations) > 100:
+            average_forest_fire_sizes = pd.Series(range(len(tree_planting_locations))).parallel_apply(
+                lambda idx: simulate_tree_at_location(world, tree_planting_locations[idx])
+            )
+        else:
+            average_forest_fire_sizes = [
+                simulate_tree_at_location(world, location) for location in tree_planting_locations
+            ]
 
         # plant tree
         tree_planting_location = tree_planting_locations[np.argmin(average_forest_fire_sizes)]
@@ -102,47 +114,95 @@ def run_hot_model(L: int, D: int):
         yield_ = np.sum(world) - np.min(average_forest_fire_sizes)
 
         yields += [yield_]
+        history += [world.copy()]
 
         if yield_ > max_yield:
             max_yield = yield_
             max_yield_forest = world.copy()
 
-    return yields, max_yield_forest
+    return yields, max_yield_forest, history
 
-L = 10
+argparser = argparse.ArgumentParser()
+argparser.add_argument("L", type=int, default=10)
+args = argparser.parse_args()
+
+L = args.L
 Ds = [1, 2, L, L ** 2]
+# measure execution time
+
+start = time.time()
 results = [run_hot_model(L, D) for D in Ds]
+end = time.time()
+print("execution time: %.2f seconds" % (end - start))
+
+print("plotting results...")
 
 # (a) Plot the forest at (approximate) peak yield.
 # (draw subplots for each D in two rows)
 fig, axes = plt.subplots(2, 2, figsize=(10, 10))
-for i, (yields, max_yield_forest) in enumerate(results):
+for i, (yields, max_yield_forest, _) in enumerate(results):
     axes[i // 2, i % 2].imshow(max_yield_forest)
     axes[i // 2, i % 2].set_title("D = %d" % Ds[i])
-plt.draw()
+    # remove ticks
+    axes[i // 2, i % 2].set_xticks([])
+    axes[i // 2, i % 2].set_yticks([])
+
+fig.tight_layout()
+plt.savefig(f"output/10_3_a-L{L}.png", dpi=600)
 
 # (b) Plot the yield curves for each value of D, and identify (approximately) the peak yield and the density for which
 #     peak yield occurs for each value of D.
 #     (draw into one plot, x: density, y: yield)
 plt.figure()
-for i, (yields, max_yield_forest) in enumerate(results):
+for i, (yields, max_yield_forest, _) in enumerate(results):
     plt.plot(np.arange(len(yields)) / (L * L), yields, label="D = %d" % Ds[i])
 plt.legend()
 plt.xlabel("density")
 plt.ylabel("yield")
+plt.savefig(f"output/10_3_b-L{L}.png", dpi=600)
 
-# (c) Plot Zipf (or size) distributions of tree component sizes S at peak yield.
+# (c) Plot Zipf distributions of tree component sizes S at peak yield.
 # (draw subplots for each D in two rows)
 fig, axes = plt.subplots(2, 2, figsize=(10, 10))
-for i, (yields, max_yield_forest) in enumerate(results):
+for i, (yields, max_yield_forest, _) in enumerate(results):
     labeled_components, _ = ndimage.label(max_yield_forest)
     component_sizes = np.bincount(labeled_components.flatten())[1:]
-    axes[i // 2, i % 2].hist(component_sizes, bins=range(1, L*L))
+    axes[i // 2, i % 2].scatter(rankdata(-component_sizes), component_sizes)
+    # axes[i // 2, i % 2].hist(component_sizes, bins=range(1, L*L))
+    axes[i // 2, i % 2].set_xscale("log")
+    axes[i // 2, i % 2].set_yscale("log")
     axes[i // 2, i % 2].set_title("D = %d" % Ds[i])
     axes[i // 2, i % 2].set_yscale("log")
     axes[i // 2, i % 2].set_xlabel("component size")
     axes[i // 2, i % 2].set_ylabel("count")
 
-plt.draw()
+# increase spacing between subplots
+fig.tight_layout()
+plt.savefig(f"output/10_3_c-L{L}.png", dpi=600)
+
+# (d) Extra level: Plot Zipf distributions for D = L^2 for varying tree densities
+#   as a grid of subplots, where the x-axis is the tree density and the y-axis is the component size.
+
+L_squared_history = results[-1][-1]
+
+# filter history for desired densities
+densities = np.arange(0.1, 1, 0.1)
+history = [L_squared_history[int(density * L * L)] for density in densities]
+
+plt.subplots(3, 3, figsize=(10, 10))
+for i, forest in enumerate(history):
+    labeled_components, _ = ndimage.label(forest)
+    component_sizes = np.bincount(labeled_components.flatten())[1:]
+
+    plt.subplot(3, 3, i + 1)
+    plt.scatter(rankdata(-component_sizes), component_sizes)
+    plt.title("density = %.2f" % densities[i])
+    plt.loglog(10)
+    plt.xlabel("component size")
+    plt.ylabel("count")
+
+plt.tight_layout()
+plt.savefig(f"output/10_3_d-L{L}.png", dpi=600)
+
 
 plt.show()
