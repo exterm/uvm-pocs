@@ -1,7 +1,15 @@
+import random
+
 import networkx as nx
 import matplotlib.pyplot as plt
 
-n = 8
+# replicating the results of the paper
+# "Structure, Scaling, and Phase Transition in the Optimal Transport Network"
+# by Steffen Bohn and Marcelo O. Magnasco, published 21 Feb 2007 in Physical Review Letters.
+
+n = 3
+gamma = 1
+i0 = 1000
 
 # triangular lattice graph in the shape of a hexagon, side length n (nodes)
 def hexagon(n):
@@ -42,9 +50,32 @@ def hexagon(n):
 
     return G
 
+def draw_graph(G):
+    # draw graph, with edge width proportional to conductance
+    pos = nx.get_node_attributes(G, 'pos')
+    nx.draw(G, pos, with_labels=True,
+        width=[G.edges[edge]['conductance']/total_conductance*100 for edge in G.edges()],
+    )
+    plt.show()
+
 G = hexagon(n)
 
-# draw graph
-pos = nx.get_node_attributes(G, 'pos')
-nx.draw(G, pos, with_labels=True)
-plt.show()
+Gamma = 2*gamma/(gamma+1)
+total_nodes = len(G.nodes())
+
+# set current sources (negative sources are sinks)
+for node in G.nodes():
+    if node == (0,0):
+        G.nodes[node]['source'] = i0
+    else:
+        G.nodes[node]['source'] = -i0/(total_nodes - 1)
+
+# set conductances
+for edge in G.edges():
+    # conductance of the edge is random
+    G.edges[edge]['conductance'] = random.random()
+
+# total conductance of the graph
+total_conductance = sum([G.edges[edge]['conductance']**gamma for edge in G.edges()])**(1/gamma)
+
+draw_graph(G)
