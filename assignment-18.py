@@ -55,20 +55,20 @@ def hexagon(n):
     return G
 
 def edge_width(G, edge):
-    max_conductance = max([G.edges[edge]['conductance'] for edge in G.edges()])
+    avg_conductance = sum([G.edges[edge]['conductance'] for edge in G.edges()])/len(G.edges())
 
     # normalize
-    width = G.edges[edge]['conductance']/max_conductance
+    width = G.edges[edge]['conductance']/avg_conductance
 
     # cut off very small values
-    if width < 0.001:
+    if width < 0.01:
         width = 0
 
     # sublinear scaling
     width = math.sqrt(width)
 
     # linear scaling
-    width *= 10
+    width *= 2
 
     return width
 
