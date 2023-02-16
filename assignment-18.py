@@ -76,7 +76,7 @@ for node in G.nodes():
 
 # set conductances
 for edge in G.edges():
-    G.edges[edge]['conductance'] = 1 # random.random()
+    G.edges[edge]['conductance'] = random.random()
 
 # total conductance of the graph
 total_conductance = sum([G.edges[edge]['conductance']**gamma for edge in G.edges()])**(1/gamma)
