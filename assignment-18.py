@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 # "Structure, Scaling, and Phase Transition in the Optimal Transport Network"
 # by Steffen Bohn and Marcelo O. Magnasco, published 21 Feb 2007 in Physical Review Letters.
 
-n = 3
+n = 8
 gamma = 1
 i0 = 1000
 
@@ -53,9 +53,12 @@ def hexagon(n):
 def draw_graph(G):
     # draw graph, with edge width proportional to conductance
     pos = nx.get_node_attributes(G, 'pos')
-    nx.draw(G, pos, with_labels=True,
-        width=[G.edges[edge]['conductance']/total_conductance*100 for edge in G.edges()],
+    nx.draw(G, pos, with_labels=False,
+        width=[G.edges[edge]['conductance']/total_conductance*100*4 for edge in G.edges()],
+        node_size=0,
     )
+    # write to pdf
+    plt.savefig('hexagon.pdf')
     plt.show()
 
 G = hexagon(n)
@@ -73,9 +76,11 @@ for node in G.nodes():
 # set conductances
 for edge in G.edges():
     # conductance of the edge is random
-    G.edges[edge]['conductance'] = random.random()
+    G.edges[edge]['conductance'] = 1 # random.random()
 
 # total conductance of the graph
 total_conductance = sum([G.edges[edge]['conductance']**gamma for edge in G.edges()])**(1/gamma)
+
+print(nx.adjacency_matrix(G))
 
 draw_graph(G)
