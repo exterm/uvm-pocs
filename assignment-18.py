@@ -58,8 +58,6 @@ def draw_graph(G):
         width=[G.edges[edge]['conductance']/total_conductance*100*4 for edge in G.edges()],
         node_size=0,
     )
-    # write to pdf
-    plt.savefig('hexagon.pdf')
     plt.show()
 
 G = hexagon(n)
