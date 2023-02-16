@@ -21,6 +21,7 @@ def hexagon(n):
     # rows of increasing length
     for i in range(n):
         for j in range(n + i):
+            G.add_node((i,j))
             if i > 0:
                 if j < n + i - 1:
                     G.add_edge((i,j), (i-1,j))
@@ -75,12 +76,12 @@ for node in G.nodes():
 
 # set conductances
 for edge in G.edges():
-    # conductance of the edge is random
     G.edges[edge]['conductance'] = 1 # random.random()
 
 # total conductance of the graph
 total_conductance = sum([G.edges[edge]['conductance']**gamma for edge in G.edges()])**(1/gamma)
 
-print(nx.adjacency_matrix(G))
+# print adjacency matrix with node labels
+print(nx.to_pandas_adjacency(G, weight='conductance'))
 
 draw_graph(G)
